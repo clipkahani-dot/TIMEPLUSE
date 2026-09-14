@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import RazorpayModal from './RazorpayModal';
 import { 
   Play, Radio, Video, FileCheck, ArrowDownCircle, BookOpen, 
   CheckCircle2, Star, Users, Clock, ShieldCheck, Sparkles, 
@@ -260,65 +261,19 @@ export default function HomeTab({ batches, liveClasses, vods, tests, pdfs, onSel
         </div>
       </div>
 
-      {/* Simulated Checkout Modal */}
+      {/* Razorpay Sandbox Payment Modal */}
       {showCheckoutModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-            {paymentSuccess ? (
-              <div className="text-center py-8 space-y-3">
-                <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center mx-auto text-emerald-400 animate-bounce">
-                  <Check className="w-8 h-8 stroke-[3]" />
-                </div>
-                <h3 className="text-lg font-black text-white">Enrollment Successful!</h3>
-                <p className="text-xs text-slate-300">Welcome to {showCheckoutModal.title}. Enjoy your live classes & notes!</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Fast Checkout</span>
-                    <h3 className="text-sm font-black text-white mt-1">{showCheckoutModal.title}</h3>
-                  </div>
-                  <button onClick={() => setShowCheckoutModal(null)} className="text-slate-400 hover:text-white text-sm">✕</button>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Course Fee:</span>
-                    <span className="line-through">₹{showCheckoutModal.originalPrice}</span>
-                  </div>
-                  <div className="flex justify-between text-emerald-400">
-                    <span>Special Discount:</span>
-                    <span>-₹{showCheckoutModal.originalPrice - showCheckoutModal.price}</span>
-                  </div>
-                  <div className="pt-2 border-t border-slate-800 flex justify-between font-black text-white text-sm">
-                    <span>Total Payable:</span>
-                    <span className="text-amber-400">₹{showCheckoutModal.price}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-slate-400">Payment Method</span>
-                  <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-sky-400" />
-                      <span className="text-xs font-bold text-white">UPI / PhonePe / GPay / Card</span>
-                    </div>
-                    <span className="text-[10px] text-emerald-400 font-bold">Zero Gateway Fee</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleCompletePayment}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Pay ₹{showCheckoutModal.price} & Start Learning</span>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+        <RazorpayModal 
+          batch={showCheckoutModal}
+          user={user}
+          onClose={() => setShowCheckoutModal(null)}
+          onPaymentSuccess={(purchasedBatch) => {
+            purchasedBatch.enrolled = true;
+            if (onSelectTab) {
+              // optional notification
+            }
+          }}
+        />
       )}
     </div>
   );
