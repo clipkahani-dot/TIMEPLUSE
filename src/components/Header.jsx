@@ -1,8 +1,10 @@
 import React from 'react';
-import { Bell, ShieldCheck, ChevronDown, Sparkles, User, Settings, Smartphone, Monitor } from 'lucide-react';
+import { Bell, ShieldCheck, ChevronDown, Sparkles, User, Settings, Smartphone, Monitor, LogIn } from 'lucide-react';
 import Logo from './Logo';
 
-export default function Header({ user, isAdmin, onToggleAdmin, isMobileFrame, onToggleFrame }) {
+export default function Header({ user, isAdmin, onToggleAdmin, isMobileFrame, onToggleFrame, onOpenAuth, onOpenProfile }) {
+  const isLoggedIn = user && user.id;
+
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
       <Logo size="sm" />
@@ -38,13 +40,27 @@ export default function Header({ user, isAdmin, onToggleAdmin, isMobileFrame, on
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
         </div>
 
-        {/* Student Profile Pill */}
-        <div className="flex items-center gap-2 bg-slate-800/80 pl-1.5 pr-2.5 py-1 rounded-full border border-slate-700">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-[11px] font-bold text-white">
-            {user.name[0]}
-          </div>
-          <span className="text-xs font-medium text-slate-200 hidden sm:inline max-w-[80px] truncate">{user.name}</span>
-        </div>
+        {/* Student Profile Pill or Login Button */}
+        {isLoggedIn ? (
+          <button 
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-800 pl-1.5 pr-2.5 py-1 rounded-full border border-slate-700 transition-all cursor-pointer"
+            title="View Profile & Account"
+          >
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 flex items-center justify-center text-[11px] font-bold text-slate-950">
+              {user.name ? user.name[0] : 'U'}
+            </div>
+            <span className="text-xs font-medium text-slate-200 hidden sm:inline max-w-[80px] truncate">{user.name}</span>
+          </button>
+        ) : (
+          <button
+            onClick={onOpenAuth}
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-3 py-1.5 rounded-full shadow-md shadow-amber-500/20 transition-all"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>लॉगिन</span>
+          </button>
+        )}
       </div>
     </header>
   );

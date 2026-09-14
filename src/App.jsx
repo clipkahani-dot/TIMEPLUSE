@@ -8,6 +8,8 @@ import TestsTab from './components/TestsTab';
 import DownloadsTab from './components/DownloadsTab';
 import AdminPanel from './components/AdminPanel';
 import PdfModal from './components/PdfModal';
+import AuthModal from './components/AuthModal';
+import ProfileModal from './components/ProfileModal';
 import { supabase } from './supabaseClient';
 
 import { 
@@ -36,13 +38,31 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
   const [activePdf, setActivePdf] = useState(null);
 
+  // Auth Modals State
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
   // -------------------------------------------------------------
-  // Live Cloud Sync with Supabase
+  // Live Cloud Sync with Supabase & Auth Listener
   // -------------------------------------------------------------
   useEffect(() => {
     async function syncWithSupabase() {
       try {
-        // 1. Fetch Batches from Supabase
+        // 1. Check current authenticated user session
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          const authUser = sessionData.session.user;
+          setUser({
+            id: authUser.id,
+            name: authUser.user_metadata?.name || 'अमन शर्मा',
+            phone: authUser.user_metadata?.phone || '+91 9229840686',
+            email: authUser.email || 'student@timeplus.in',
+            targetExam: authUser.user_metadata?.target_exam || 'Railway ALP & Bihar SI',
+            enrolledBatches: ['b1']
+          });
+        }
+
+        // 2. Fetch Batches from Supabase
         const { data: dbBatches } = await supabase.from('batches').select('*');
         if (dbBatches && dbBatches.length > 0) {
           setBatches(dbBatches.map(b => ({
@@ -55,7 +75,7 @@ export default function App() {
           })));
         }
 
-        // 2. Fetch Live Classes from Supabase
+        // 3. Fetch Live Classes from Supabase
         const { data: dbLive } = await supabase.from('live_classes').select('*');
         if (dbLive && dbLive.length > 0) {
           setLiveClasses(dbLive.map(l => ({
@@ -65,7 +85,7 @@ export default function App() {
           })));
         }
 
-        // 3. Fetch Tests & Questions from Supabase
+        // 4. Fetch Tests & Questions from Supabase
         const { data: dbTests } = await supabase.from('tests').select('*');
         const { data: dbQuestions } = await supabase.from('questions').select('*');
         if (dbTests && dbTests.length > 0) {
@@ -86,7 +106,7 @@ export default function App() {
           setTests([testWithQs]);
         }
 
-        // 4. Fetch Live Chat Messages
+        // 5. Fetch Live Chat Messages
         const { data: dbChat } = await supabase.from('live_chat').select('*').order('created_at', { ascending: true });
         if (dbChat && dbChat.length > 0) {
           setChatMessages(dbChat.map(c => ({
@@ -107,7 +127,42 @@ export default function App() {
     }
 
     syncWithSupabase();
+
+    // Listen to Auth State Changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        setUser({
+          id: u.id,
+          name: u.user_metadata?.name || 'अमन शर्मा',
+          phone: u.user_metadata?.phone || '+91 9229840686',
+          email: u.email || 'student@timeplus.in',
+          targetExam: u.user_metadata?.target_exam || 'Railway ALP & Bihar SI',
+          enrolledBatches: ['b1']
+        });
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
+
+  // Handlers for Auth
+  const handleAuthSuccess = (authUser) => {
+    setUser({
+      id: authUser.id,
+      name: authUser.user_metadata?.name || 'अमन शर्मा',
+      phone: authUser.user_metadata?.phone || '+91 9229840686',
+      email: authUser.email || 'student@timeplus.in',
+      targetExam: authUser.user_metadata?.target_exam || 'Railway ALP & Bihar SI',
+      enrolledBatches: ['b1']
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(INITIAL_USER);
+  };
 
   // Handlers for Admin additions (Synchronized to Supabase in real-time)
   const handleAddLive = async (newLive) => {
@@ -250,6 +305,8 @@ export default function App() {
           onToggleAdmin={() => setIsAdmin(!isAdmin)}
           isMobileFrame={isMobileFrame}
           onToggleFrame={() => setIsMobileFrame(!isMobileFrame)}
+          onOpenAuth={() => setShowAuthModal(true)}
+          onOpenProfile={() => setShowProfileModal(true)}
         />
 
         {/* Main Content Area */}
@@ -334,6 +391,21 @@ export default function App() {
             onDownload={handleDownloadPdf}
           />
         )}
+
+        {/* Auth Login / Signup Modal */}
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
+
+        {/* Profile Modal */}
+        <ProfileModal 
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          user={user}
+          onLogout={handleLogout}
+        />
       </div>
     </div>
   );
